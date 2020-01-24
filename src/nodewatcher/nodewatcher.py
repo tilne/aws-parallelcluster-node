@@ -20,7 +20,6 @@ import tarfile
 import time
 from contextlib import closing
 from datetime import datetime
-from urllib.request import urlopen
 
 import boto3
 from botocore.config import Config
@@ -30,10 +29,10 @@ from retrying import RetryError, retry
 
 from common.time_utils import minutes, seconds
 from common.utils import (
-    CriticalError,
     get_asg_name,
     get_asg_settings,
     get_instance_properties,
+    get_metadata,
     load_module,
     retrieve_max_cluster_size,
     sleep_remaining_loop_time,
@@ -89,24 +88,6 @@ def _get_config():
         _proxy,
     )
     return NodewatcherConfig(region, scheduler, stack_name, scaledown_idletime, proxy_config)
-
-
-def _get_metadata(metadata_path):
-    """
-    Get EC2 instance metadata.
-
-    :param metadata_path: the metadata relative path
-    :return the metadata value.
-    """
-    try:
-        metadata_value = urlopen("http://169.254.169.254/latest/meta-data/{0}".format(metadata_path)).read().decode()
-    except Exception as e:
-        error_msg = "Unable to get {0} metadata. Failed with exception: {1}".format(metadata_path, e)
-        log.critical(error_msg)
-        raise CriticalError(error_msg)
-
-    log.debug("%s=%s", metadata_path, metadata_value)
-    return metadata_value
 
 
 def _has_jobs(scheduler_module, hostname):
@@ -404,9 +385,9 @@ def main():
 
         scheduler_module = load_module("nodewatcher.plugins." + config.scheduler)
 
-        instance_id = _get_metadata("instance-id")
-        hostname = _get_metadata("local-hostname")
-        instance_type = _get_metadata("instance-type")
+        instance_id = get_metadata("instance-id")
+        hostname = get_metadata("local-hostname")
+        instance_type = get_metadata("instance-type")
         log.info("Instance id is %s, hostname is %s, instance type is %s", instance_id, hostname, instance_type)
         asg_name = get_asg_name(config.stack_name, config.region, config.proxy_config)
 

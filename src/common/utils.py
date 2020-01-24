@@ -19,6 +19,7 @@ import sys
 import time
 from datetime import datetime
 from subprocess import check_output
+from urllib.request import urlopen
 
 import boto3
 from retrying import retry
@@ -378,3 +379,21 @@ def retrieve_max_cluster_size(region, proxy_config, asg_name, fallback):
         )
         log.critical(error_msg)
         raise CriticalError(error_msg)
+
+
+def get_metadata(metadata_path):
+    """
+    Get EC2 instance metadata.
+
+    :param metadata_path: the metadata relative path
+    :return the metadata value.
+    """
+    try:
+        metadata_value = urlopen("http://169.254.169.254/latest/meta-data/{0}".format(metadata_path)).read().decode()
+    except Exception as e:
+        error_msg = "Unable to get {0} metadata. Failed with exception: {1}".format(metadata_path, e)
+        log.critical(error_msg)
+        raise CriticalError(error_msg)
+
+    log.debug("%s=%s", metadata_path, metadata_value)
+    return metadata_value

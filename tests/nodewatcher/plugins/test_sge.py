@@ -19,7 +19,7 @@ from nodewatcher.plugins.sge import has_jobs, has_pending_jobs, is_node_down
     "hostname, compute_nodes_output, expected_result",
     [
         (
-            "ip-10-0-0-166",
+            "ip-10-0-0-166.eu-west-1.compute.internal",
             {
                 "ip-10-0-0-166.eu-west-1.compute.internal": SgeHost(
                     name="ip-10-0-0-166.eu-west-1.compute.internal",
@@ -33,7 +33,7 @@ from nodewatcher.plugins.sge import has_jobs, has_pending_jobs, is_node_down
             False,
         ),
         (
-            "ip-10-0-0-166",
+            "ip-10-0-0-166.eu-west-1.compute.internal",
             {
                 "ip-10-0-0-166": SgeHost(
                     name="ip-10-0-0-166", slots_total=4, slots_used=0, slots_reserved=0, state="", jobs=[]
@@ -41,9 +41,9 @@ from nodewatcher.plugins.sge import has_jobs, has_pending_jobs, is_node_down
             },
             False,
         ),
-        ("ip-10-0-0-166", {}, True),
+        ("ip-10-0-0-166.eu-west-1.compute.internal", {}, True),
         (
-            "ip-10-0-0-166",
+            "ip-10-0-0-166.eu-west-1.compute.internal",
             {
                 "ip-10-0-0-166.eu-west-1.compute.internal": SgeHost(
                     name="ip-10-0-0-166.eu-west-1.compute.internal",
@@ -56,15 +56,12 @@ from nodewatcher.plugins.sge import has_jobs, has_pending_jobs, is_node_down
             },
             True,
         ),
-        ("ip-10-0-0-166", Exception, True),
+        ("ip-10-0-0-166.eu-west-1.compute.internal", Exception, True),
     ],
     ids=["healthy", "healthy_short", "not_attached", "error_state", "exception"],
 )
 def test_terminate_if_down(hostname, compute_nodes_output, expected_result, mocker):
-    mocker.patch("nodewatcher.plugins.sge.check_command_output", return_value=hostname, autospec=True)
-    mocker.patch(
-        "nodewatcher.plugins.sge.socket.getfqdn", return_value=hostname + ".eu-west-1.compute.internal", autospec=True
-    )
+    mocker.patch("nodewatcher.plugins.sge.get_metadata", return_value=hostname, autospec=True)
     if compute_nodes_output is Exception:
         mock = mocker.patch("nodewatcher.plugins.sge.get_compute_nodes_info", side_effect=Exception(), autospec=True)
     else:
@@ -73,7 +70,7 @@ def test_terminate_if_down(hostname, compute_nodes_output, expected_result, mock
         )
 
     assert_that(is_node_down()).is_equal_to(expected_result)
-    mock.assert_called_with(hostname)
+    mock.assert_called_with(hostname.split(".")[0])
 
 
 @pytest.mark.parametrize(

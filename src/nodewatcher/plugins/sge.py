@@ -10,7 +10,6 @@
 # limitations under the License.
 
 import logging
-import socket
 import subprocess
 
 from common.schedulers.sge_commands import (
@@ -22,7 +21,7 @@ from common.schedulers.sge_commands import (
 )
 from common.schedulers.sge_commands import lock_host as sge_lock_host
 from common.schedulers.sge_commands import unlock_host
-from common.utils import check_command_output
+from common.utils import get_metadata
 
 log = logging.getLogger(__name__)
 
@@ -76,8 +75,8 @@ def is_node_down():
     - node is in one of the SGE_ERROR_STATES states
     """
     try:
-        hostname = check_command_output("hostname").strip()
-        host_fqdn = socket.getfqdn(hostname)
+        host_fqdn = get_metadata("local-hostname")
+        hostname = host_fqdn.split(".")[0]
         nodes = get_compute_nodes_info(hostname_filter=hostname)
         if not any(host in nodes for host in [hostname, host_fqdn]):
             log.warning("Node is not attached to scheduler. Reporting as down")
