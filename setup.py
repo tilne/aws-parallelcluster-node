@@ -33,7 +33,7 @@ console_scripts = [
     "computemgtd = slurm_plugin.computemgtd:main",
 ]
 version = "2.9.1"
-requires = ["boto3>=1.7.55", "retrying>=1.3.3", "paramiko>=2.4.2"]
+requires = ["boto3>=1.7.55", "retrying>=1.3.3", "paramiko>=2.4.2", "cryptography<3.4.0"]
 
 setup(
     name="aws-parallelcluster-node",
